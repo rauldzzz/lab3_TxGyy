@@ -14,7 +14,8 @@ void axpy_cpu(int n, double alpha, double* x, double* y)
 
 void axpy_gpu(int n, double alpha, double* x, double* y)
 {
-    #pragma acc data present(x[0:n], y[0:n]) //Señalamos que los datos x e y están presentes en el device
+    #pragma acc data present(x, y) //Señalamos que los datos x e y están presentes en el device
+    #pragma acc parallel loop  //Señalamos que los datos x e y están presentes en el device
     for (int i = 0; i < n; i++)
     {
         y[i] = alpha*x[i] + y[i];
@@ -56,7 +57,6 @@ int main(int argc, char **argv)
 
     time_start = omp_get_wtime();    
 
-    #pragma acc parallel loop //Señalamos que el loop es paralelo
     for(int i = 0; i < 100; i++)
         axpy_gpu(vec_size, alpha, x, y_gpu);
 
