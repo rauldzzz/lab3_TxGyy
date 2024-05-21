@@ -15,10 +15,12 @@ void axpy_cpu(int n, double alpha, double* x, double* y)
 void axpy_gpu(int n, double alpha, double* x, double* y)
 {
     #pragma acc data present(x[0:n], y[0:n]) //Señalamos que los datos x e y están presentes en el device
-    for (int i = 0; i < n; i++)
-    {
-        y[i] = alpha*x[i] + y[i];
-    } 
+        
+        #pragma acc parallel loop //Señalamos que el loop es paralelo
+        for (int i = 0; i < n; i++)
+        {
+            y[i] = alpha*x[i] + y[i];
+        } 
 }
 
 
@@ -72,7 +74,7 @@ int main(int argc, char **argv)
     printf("axpy comparison cpu vs gpu error: %e, size %d\n",
            norm2, vec_size);
 
-    double speed_up = time_cpu/time_gpu; // TODO
+    double speed_up = time_cpu/time_gpu; 
     printf("CPU Time: %lf - GPU Time: %lf - speed-up = %lf\n", time_cpu, time_gpu, speed_up);
 
     // free allocated memory
