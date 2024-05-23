@@ -10,26 +10,30 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
     for (int i = 0; i < m; i++)
     {
-        for (int j = 0; j < r; i++)
+        for (int j = 0; j < r; j++)
         {
             y[i] += vals[j + i*r]*x[cols[j + i*r]];
-                }
-        
+        }
+
     }
-    
+
 }
 
 void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
-    #pragma acc data present(vals[0:m*r], cols[0:m*r], x[0:m], y[0:m]){
-        #pragma acc parallel loop
+#pragma acc data present(vals[0:m*r], cols[0:m*r], x[0:m], y[0:m])
+    {
+#pragma acc parallel loop
         for (int i = 0; i < m; i++)
         {
+            double y_temp = 0.0;
+
+#pragma acc loop seq
             for (int j = 0; j < r; i++)
             {
-                y[i] += vals[j + i*r]*x[cols[j + i*r]];
-                    }
-            
+                y_temp += vals[j + i*r]*x[cols[j + i*r]];
+            }
+            y[i] += y_temp;
         }
     }
 }
@@ -114,7 +118,7 @@ int main()
     time_end = omp_get_wtime();
     time_cpu = time_end - time_start;
 
-    #pragma acc enter data copyin(x[0:vec_size], y_gpu[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size]);
+#pragma acc enter data copyin(x[0:vec_size], y_gpu[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
 
     time_start = omp_get_wtime();
 
@@ -124,7 +128,7 @@ int main()
     time_end = omp_get_wtime();
     time_gpu = time_end - time_start;
 
-    #pragma acc exit data copyout(y_gpu[0:vec_size])
+#pragma acc exit data copyout(y_gpu[0:vec_size]) delete(x[0:vec_size] , Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
 
     // compare gpu and cpu results
     double norm2 = 0.0;
