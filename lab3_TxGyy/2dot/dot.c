@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     time_end = omp_get_wtime();
     time_gpu = time_end - time_start;
     
-    #pragma acc exit data copyout(x[0:vec_size], y[0:vec_size])
+    #pragma acc exit data copyout(y[0:vec_size])
 
     printf("dot product comparison cpu vs gpu %e, size %d\n",
            dot_cpu - dot_gpu, vec_size);
