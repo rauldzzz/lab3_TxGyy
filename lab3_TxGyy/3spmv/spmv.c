@@ -118,7 +118,7 @@ int main()
     time_end = omp_get_wtime();
     time_cpu = time_end - time_start;
 
-#pragma acc enter data copyin(x[0:vec_size], y_gpu[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
+#pragma acc enter data copyin(x[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size]) create (y_gpu[0:vec_size])
 
     time_start = omp_get_wtime();
 
