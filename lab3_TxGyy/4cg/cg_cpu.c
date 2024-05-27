@@ -8,14 +8,30 @@
 
 void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < r; j++)
+        {
+            y[i] += vals[j + i*r]*x[cols[j + i*r]];
+        }
+    }
 }
 
 void axpy_cpu(int n, double alpha, double* x, double* y)
 {
+    for (int i = 0; i < n; i++)
+    {
+        y[i] = alpha*x[i] + y[i];
+    }
 }
 
 double dot_product_cpu(int n, double* x, double* y)
 {
+    double dot_product = 0.0;
+    for (int i = 0; i < n; i++) {
+         dot_product += x[i] * y[i];
+    }
+        return dot_product;
 }
 
 
@@ -115,13 +131,15 @@ void cg_cpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
 
         rho1 = dot_product_cpu(vec_size, r0, r0);
 
-        if(k % 20 == 0)
+        if(k % 20 == 0){
             printf("Iteration %d, residual %e\n", k, rho1);
-
+            fflush(stdout);
+        }
         beta = rho1/rho0;
 
-        for(int i = 0; i < vec_size; i++)
+        for(int i = 0; i < vec_size; i++){
             p0[i] = r0[i] + beta*p0[i];
+        }
     }
 
     free(Ax);
@@ -162,9 +180,9 @@ int main()
    
     // compare cpu solution with real solution
     double norm2 = 0.0;
-    for(int i = 0; i < vec_size; i++)
+    for(int i = 0; i < vec_size; i++){
         norm2 += (x_cpu[i] - x_sol[i])*(x_cpu[i] - x_sol[i]);
-
+    }
     printf("cg error in gpu solution: %e, size %d\n", sqrt(norm2), vec_size);
 
     printf("Time CPU: %lf\n", time_cpu);

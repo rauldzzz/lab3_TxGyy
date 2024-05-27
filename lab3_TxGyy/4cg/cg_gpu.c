@@ -9,18 +9,58 @@
 // spmv_cpu is needed to compute the right hand side vector
 void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < r; j++)
+        {
+            y[i] += vals[j + i*r]*x[cols[j + i*r]];
+        }
+    }
 }
 
 void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
+    #pragma acc data present(vals[0:m*r], cols[0:m*r], x[0:m], y[0:m])
+    {
+        #pragma acc parallel loop
+        for (int i = 0; i < m; i++)
+        {
+            double y_temp = 0.0;
+
+            #pragma acc loop seq
+            for (int j = 0; j < r; j++)
+            {
+                y_temp += vals[j + i*r]*x[cols[j + i*r]];
+            }
+            y[i] += y_temp;
+        }
+    }
 }
 
 void axpy_gpu(int n, double alpha, double* x, double* y)
 {
+    #pragma acc data present(x[0:n], y[0:n]) //Señalamos que los datos x e y están presentes en el device
+    {
+        #pragma acc parallel loop //Señalamos que el loop es paralelo
+        for (int i = 0; i < n; i++)
+        {
+            y[i] = alpha*x[i] + y[i];
+        } 
+    }
 }
 
 double dot_product_gpu(int n, double* x, double* y)
 {
+    double dot_product = 0.0;
+    #pragma acc data present(x[0:n], y[0:n]) 
+    {
+        #pragma acc parallel loop reduction(+:dot_product)
+        for (int i = 0; i < n; i++) {
+            dot_product += x[i] * y[i];
+        }
+    }
+    return dot_product;
+        
 }
 
 
@@ -95,6 +135,9 @@ void cg_gpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
         r0[i] = rhs[i];
     }
 
+    #pragma acc enter data copyin(x[0:vec_size], Ax[0:vec_size], r0[0:vec_size], p0[0:vec_size])
+    #pragma acc enter data copyin(Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
+
     spmv_gpu(vec_size, ROWSIZE, Avals, Acols, x , Ax);
 
     axpy_gpu(vec_size, -1.0, Ax, r0);
@@ -128,6 +171,9 @@ void cg_gpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
         for(int i = 0; i < vec_size; i++)
             p0[i] = r0[i] + beta*p0[i];
     }
+
+    #pragma acc exit data delete(x[0:vec_size], Ax[0:vec_size], r0[0:vec_size], p0[0:vec_size])
+    #pragma acc exit data delete(Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
 
     free(Ax);
     free(r0);
