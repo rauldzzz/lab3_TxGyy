@@ -21,15 +21,15 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
 
 void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
-#pragma acc data present(vals[0:m*r], cols[0:m*r], x[0:m], y[0:m])
+    #pragma acc data present(vals[0:m*r], cols[0:m*r], x[0:m], y[0:m])
     {
-#pragma acc parallel loop
+        #pragma acc parallel loop
         for (int i = 0; i < m; i++)
         {
             double y_temp = 0.0;
 
-#pragma acc loop seq
-            for (int j = 0; j < r; i++)
+            #pragma acc loop seq
+            for (int j = 0; j < r; j++)
             {
                 y_temp += vals[j + i*r]*x[cols[j + i*r]];
             }
