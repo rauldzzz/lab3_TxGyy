@@ -10,11 +10,12 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
     for (int i = 0; i < m; i++)
     {
+        double y_temp = 0.0;
         for (int j = 0; j < r; j++)
         {
-            y[i] += vals[j + i*r]*x[cols[j + i*r]];
+            y_temp += vals[j + i*r]*x[cols[j + i*r]];
         }
-
+        y[i] += y_temp;
     }
 
 }
@@ -29,7 +30,7 @@ void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
             double y_temp = 0.0;
 
 #pragma acc loop seq
-            for (int j = 0; j < r; i++)
+            for (int j = 0; j < r; j++)
             {
                 y_temp += vals[j + i*r]*x[cols[j + i*r]];
             }
