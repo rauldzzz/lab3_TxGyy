@@ -15,7 +15,7 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
         {
             y_temp += vals[j + i*r]*x[cols[j + i*r]];
         }
-        y[i] += y_temp;
+        y[i] = y_temp;
     }    
 }
 

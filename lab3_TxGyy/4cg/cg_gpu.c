@@ -16,7 +16,7 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
         {
             y_temp += vals[j + i*r]*x[cols[j + i*r]];
         }
-        y[i] += y_temp;
+        y[i] = y_temp;
     }    
 }
 
@@ -34,7 +34,7 @@ void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
             {
                 y_temp += vals[j + i*r]*x[cols[j + i*r]];
             }
-            y[i] += y_temp;
+            y[i] = y_temp;
         }
     }
 }
@@ -134,7 +134,10 @@ void cg_gpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
 
     for(int i = 0; i < vec_size; i++)
     {
+        x[i] = 0.0;
         r0[i] = rhs[i];
+        p0[i] = r0[i];
+        Ax[i] = 0.0;
     }
 
     #pragma acc enter data copyin(x[0:vec_size], Ax[0:vec_size], r0[0:vec_size], p0[0:vec_size])
@@ -143,12 +146,6 @@ void cg_gpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
     spmv_gpu(vec_size, ROWSIZE, Avals, Acols, x , Ax);
 
     axpy_gpu(vec_size, -1.0, Ax, r0);
-
-    for(int i = 0; i < vec_size; i++)
-    {
-        p0[i] = r0[i];
-    }
-
 
     for(int k = 0; k < iterations; k++) 
     {
@@ -166,23 +163,24 @@ void cg_gpu(int vec_size, double* Avals, int* Acols, double* rhs, double* x)
         rho1 = dot_product_gpu(vec_size, r0, r0);
 
         if(k % 20 == 0)
+
             printf("Iteration %d, residual %e\n", k, rho1);
 
         beta = rho1/rho0;
 
-        for(int i = 0; i < vec_size; i++)
+        #pragma acc parallel loop
+        for(int i = 0; i < vec_size; i++){
             p0[i] = r0[i] + beta*p0[i];
+        }
     }
-
-    #pragma acc exit data delete(x[0:vec_size], Ax[0:vec_size], r0[0:vec_size], p0[0:vec_size])
+    #pragma acc exit data copyout(x[0:vec_size])
+    #pragma acc exit data delete(Ax[0:vec_size], r0[0:vec_size], p0[0:vec_size])
     #pragma acc exit data delete(Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
 
     free(Ax);
     free(r0);
     free(p0);
 }
-
-
 
 int main()
 {

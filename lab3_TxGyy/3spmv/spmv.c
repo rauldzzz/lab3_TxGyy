@@ -16,14 +16,11 @@ void spmv_cpu(int m, int r, double* vals, int* cols, double* x, double* y)
         {
             y_temp += vals[j + i*r]*x[cols[j + i*r]];
         }
-        y[i] += y_temp;
-<<<<<<< HEAD
-    }    
-=======
-    }
+        y[i] = y_temp;
 
->>>>>>> 744707a8259a022f21555926a263ff93f5249e0e
+    }    
 }
+
 
 void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
 {
@@ -34,12 +31,12 @@ void spmv_gpu(int m, int r, double* vals, int* cols, double* x, double* y)
         {
             double y_temp = 0.0;
 
-#pragma acc loop seq
+            #pragma acc loop seq
             for (int j = 0; j < r; j++)
             {
                 y_temp += vals[j + i*r]*x[cols[j + i*r]];
             }
-            y[i] += y_temp;
+            y[i] = y_temp;
         }
     }
 }
@@ -124,11 +121,7 @@ int main()
     time_end = omp_get_wtime();
     time_cpu = time_end - time_start;
 
-<<<<<<< HEAD
-    #pragma acc enter data copyin(x[0:vec_size], y_gpu[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size])
-=======
-#pragma acc enter data copyin(x[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size]) create (y_gpu[0:vec_size])
->>>>>>> 744707a8259a022f21555926a263ff93f5249e0e
+    #pragma acc enter data copyin(x[0:vec_size], Avals[0:ROWSIZE*vec_size], Acols[0:ROWSIZE*vec_size]) create (y_gpu[0:vec_size])
 
     time_start = omp_get_wtime();
 
